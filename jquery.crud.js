@@ -28,17 +28,17 @@
             // $.ajax({
             // url: index.php
             // });
-			
-			// 四种传递参数的方式
+
+            // 四种传递参数的方式
             // [url, options], [options], ($.ajax(), $.ajax()), [$.ajax(), $.ajax()]
 
-			// (options)
-			if (type === 'object' && !$.isFunction(url.promise)) {
+            // (options)
+            if (type === 'object' && !$.isFunction(url.promise)) {
                 options = undefined;
                 url = options.url;
             }
 
-			// (url, options)
+            // (url, options)
             if (typeof url === 'string') {
 
                 defaultOptions = {
@@ -59,7 +59,7 @@
                         var dfd = $.Deferred();
 
                         // maybe you can do this to prevent useless request
-						// $.ajax(url, options).done(function(data) {
+                        // $.ajax(url, options).done(function(data) {
                         //     dfd.resolve(data);
                         // });
 
@@ -85,7 +85,7 @@
                     // 不满足执行请求的条件
                 });
             } else {
-				// ($.ajax(), $.ajax()), [$.ajax(), $.ajax()]
+                // ($.ajax(), $.ajax()), [$.ajax(), $.ajax()]
                 defaultOptions = {
                     progress: progress,
                     allDone: done,
@@ -97,11 +97,11 @@
                 };
 
                 var args = [],
-					arg = arguments[0];
+                    arg = arguments[0];
 
                 // $.crud($.ajax(), $.ajax(). options)
                 if ($.type(arguments[0]) === 'object') {
-					args = $.makeArray(arguments);
+                    args = $.makeArray(arguments);
 
                     beforeLast = args.slice(0,
                         args.length - 1);
@@ -133,26 +133,26 @@
                         // 这里是业务上的, 本来不想关联业务, 后来想了想还是写上吧
                         if (responses.every(function(response) {
                                 // arg = [response, textStatus, jqXHR]
-								// we always ignore the two params, so do so
-								return response.ret === 0;
+                                // we always ignore the two params, so do so
+                                return response.ret === 0;
                             })) {
 
                             // all succeed
                             allDone = options.allDone;
-                            
-                         // 所有成功, 只有一个处理函数
+
+                            // 所有成功, 只有一个处理函数
                             if ($.isFunction(allDone)) {
                                 allDone.apply(null, responses);
-                                
-                            // 函数数组
+
+                                // 函数数组
                             } else if ($.type(allDone) === 'array') {
-                            	
-                            	// 返回信息和处理函数一一对应, 如果不写给空
-                            	responses.map(function(response, i) {
-                            		return [response, allDone[i] || function() {}];
-                            	}).forEach(function(pair) {
-                            		pair[1].call(null, pair[0]);
-                            	});
+
+                                // 返回信息和处理函数一一对应, 如果不写给空
+                                responses.map(function(response, i) {
+                                    return [response, allDone[i] || function() {}];
+                                }).forEach(function(pair) {
+                                    pair[1].call(null, pair[0]);
+                                });
                             }
                         } else {
                             // 至少有一个失败, 注意这里说的时返回的ret不为0就称为失败
@@ -161,12 +161,12 @@
                             errHandler = options.errHandler;
 
                             $.each(responses, function(i, response) {
-                                
-								// 所有成功, 只有一个处理函数
+
+                                // 所有成功, 只有一个处理函数
                                 if ($.isFunction(errHandler)) {
                                     errHandler.apply(null, responses);
 
-                                // N个任务, N个处理函数一一对应
+                                    // N个任务, N个处理函数一一对应
                                 } else if ($.isArrayLike(errHandler)) {
                                     $.each(errHandler, function(i, fn) {
                                         fn.call(null, response);
