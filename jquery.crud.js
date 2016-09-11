@@ -156,19 +156,19 @@
                             // 可以只指定一个错误处理函数,也可以一一指定
                             errHandler = options.errHandler;
 
-                            $.each(responses, function(i, response) {
+                            if ($.isFunction(errHandler)) {
+                                errHandler.apply(null, errHandler);
 
-                                // 所有成功, 只有一个处理函数
-                                if ($.isFunction(errHandler)) {
-                                    errHandler.apply(null, responses);
+                                // 函数数组
+                            } else if ($.type(errHandler) === 'array') {
 
-                                    // N个任务, N个处理函数一一对应
-                                } else if ($.isArrayLike(errHandler)) {
-                                    $.each(errHandler, function(i, fn) {
-                                        fn.call(null, response);
-                                    });
-                                }
-                            });
+                                // 返回信息和处理函数一一对应, 如果不写给空
+                                responses.map(function(response, i) {
+                                    return [response, errHandler[i] || function() {}];
+                                }).forEach(function(pair) {
+                                    pair[1].call(null, pair[0]);
+                                });
+                            }
                         }
                     }).fail(function() {
                         options.oneFailed();
