@@ -12,10 +12,6 @@
         beforeLast;
 
     $.extend({
-
-        /**
-         * [crud description]
-         */
         crud: function(url, options) {
 
             var deferreds = [],
