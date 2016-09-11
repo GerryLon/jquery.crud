@@ -10,16 +10,28 @@
     <script src="jquery-2.2.4.js"></script>
     <script src="jquery.crud.js"></script>
     <script>
-    $.crud($.ajax('http://localhost:8080/Mock/CRUDTest'), 
-            $.ajax('http://localhost:8080/Mock/CRUDTest'), {
-    	allDone: function(d1, d2) {
-    		console.log(d1, d2);
+    
+    var promises = [];
+    
+    for (var i = 0; i < 5; ++i) {
+    	promises.push($.ajax('http://localhost:8080/Mock/CRUDTest'));
+    }
+    
+    function f(d) {
+    	alert(d.ret_msg);
+    }
+    
+    var fns = [f, f, f, f, f];
+    
+    $.crud(promises, {
+    	allDone: function() {
+    		alert('all succeed');
     	},
     	oneFailed: function() {
     		alert('failed');
     	},
     	progress: function() {
-    		console.log('loading...');
+    		/* console.log('loading...'); */
     	},
     	always: function() {
     		alert('always');

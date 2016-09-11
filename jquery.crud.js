@@ -1,5 +1,6 @@
 /**
- * 经常使用$.ajax来发送请求, 如果success中业务太复杂, 不方便管理, 而且如果success中还要使用$.ajax就不好控制了
+ * 经常使用$.ajax来发送请求, 如果success中业务太复杂, 不方便管理, 
+ * 而且如果success中还要使用$.ajax就不好控制了
  * 
  * @author wanjl
  * @date 2016/09/11
@@ -14,12 +15,6 @@
 
         /**
          * [crud description]
-         * 
-         * @param {[type]}
-         *            url [description]
-         * @param {[type]}
-         *            options 只在$.ajax(url, options)这种情况下起作用
-         * @return {[type]} [description]
          */
         crud: function(url, options) {
 
@@ -33,11 +28,17 @@
             // $.ajax({
             // url: index.php
             // });
-            if (type === 'object' && type.readyState) {
+			
+			// 四种传递参数的方式
+            // [url, options], [options], ($.ajax(), $.ajax()), [$.ajax(), $.ajax()]
+
+			// (options)
+			if (type === 'object' && !$.isFunction(url.promise)) {
                 options = undefined;
                 url = options.url;
             }
 
+			// (url, options)
             if (typeof url === 'string') {
 
                 defaultOptions = {
@@ -55,10 +56,10 @@
                      * @return {[type]} [description]
                      */
                     requestFilter: function(url, options) {
-                        console.log(arguments);
                         var dfd = $.Deferred();
 
-                        // $.ajax(url, options).done(function(data) {
+                        // maybe you can do this to prevent useless request
+						// $.ajax(url, options).done(function(data) {
                         //     dfd.resolve(data);
                         // });
 
@@ -67,7 +68,7 @@
                         // }
 
                         dfd.resolve(); // return true
-                        dfd.reject(); // return false
+                        // dfd.reject(); // return false
 
                         return dfd.promise();
                     }
@@ -76,7 +77,7 @@
                 options = $.extend(true, {}, defaultOptions, options);
 
                 var requestFilter = options.requestFilter,
-                    promise = requestFilter.call(null, url, options);
+                    promise = requestFilter.call($, url, options);
 
                 promise.done(function() {
                     return $.ajax(options);
@@ -84,7 +85,7 @@
                     // 不满足执行请求的条件
                 });
             } else {
-                // ///////////////////////////////////////////////////////////
+				// ($.ajax(), $.ajax()), [$.ajax(), $.ajax()]
                 defaultOptions = {
                     progress: progress,
                     allDone: done,
@@ -95,11 +96,12 @@
                     }
                 };
 
-                var args = [];
+                var args = [],
+					arg = arguments[0];
 
                 // $.crud($.ajax(), $.ajax(). options)
                 if ($.type(arguments[0]) === 'object') {
-                    args = $.makeArray(arguments);
+					args = $.makeArray(arguments);
 
                     beforeLast = args.slice(0,
                         args.length - 1);
@@ -112,17 +114,16 @@
                     options = arguments[1];
                 }
 
-                // 每个应该都是$.ajax()这样的元素
-                if (beforeLast.every(function(ajax) {
-                        return typeof ajax === 'object';
+                // 每个应该都是promise
+                if (beforeLast.every(function(arg) {
+                        return $.isFunction(arg.promise);
                     })) {
 
                     deferreds = $.makeArray(beforeLast);
                     options = $.extend(true, {}, defaultOptions, options);
                 }
 
-                whenWithProgress(deferreds, function(cnt, deferredsLen) {
-                        // console.log(deferreds[0]);
+                return whenWithProgress(deferreds, function(cnt, deferredsLen) {
                         options.progress();
                     })
                     .done(function( /* response1, , ..., responseN */ ) {
@@ -131,26 +132,28 @@
 
                         // 这里是业务上的, 本来不想关联业务, 后来想了想还是写上吧
                         if (responses.every(function(response) {
-                                // arg = [data, textStatus, jqXHR]
-                                return response.ret === 0;
+                                // arg = [response, textStatus, jqXHR]
+								// we always ignore the two params, so do so
+								return response.ret === 0;
                             })) {
 
-                            // all success
+                            // all succeed
                             allDone = options.allDone;
-
-                            $.each(responses, function(i, response) {
-
-                                // 所有成功, 只有一个处理函数
-                                if ($.isFunction(allDone)) {
-                                    allDone.apply(null, responses);
-
-                                    // N个任务, N个处理函数一一对应
-                                } else if ($.isArrayLike(allDone)) {
-                                    $.each(allDone, function(i, fn) {
-                                        fn.call(null, response);
-                                    });
-                                }
-                            });
+                            
+                         // 所有成功, 只有一个处理函数
+                            if ($.isFunction(allDone)) {
+                                allDone.apply(null, responses);
+                                
+                            // 函数数组
+                            } else if ($.type(allDone) === 'array') {
+                            	
+                            	// 返回信息和处理函数一一对应, 如果不写给空
+                            	responses.map(function(response, i) {
+                            		return [response, allDone[i] || function() {}];
+                            	}).forEach(function(pair) {
+                            		pair[1].call(null, pair[0]);
+                            	});
+                            }
                         } else {
                             // 至少有一个失败, 注意这里说的时返回的ret不为0就称为失败
                             // 如果要执行多个ajax, 但是有一个失败(ret不为0),
@@ -158,37 +161,30 @@
                             errHandler = options.errHandler;
 
                             $.each(responses, function(i, response) {
-                                // 所有成功, 只有一个处理函数
+                                
+								// 所有成功, 只有一个处理函数
                                 if ($.isFunction(errHandler)) {
                                     errHandler.apply(null, responses);
 
-                                    // N个任务, N个处理函数一一对应
+                                // N个任务, N个处理函数一一对应
                                 } else if ($.isArrayLike(errHandler)) {
                                     $.each(errHandler, function(i, fn) {
                                         fn.call(null, response);
                                     });
                                 }
                             });
-
-
                         }
                     }).fail(function() {
                         options.oneFailed();
                     }).always(function() {
                         options.always();
                     });
-
-                // no output
-                // $.when.apply($, deferreds).then(null, null, function() {
-                //    console.log('loading.....');
-                // });
             }
         }
     });
 
     // args = [[data, textStatus, jqXHR], [data, textStatus, jqXHR]]
     function genDataArr(args) {
-
         return Array.prototype.slice.call(args).map(function(arg) {
             return arg[0];
         });

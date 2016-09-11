@@ -1,11 +1,15 @@
 package cn.wanjl.jquery.crud;
 
 import java.io.IOException;
+import java.util.Random;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import cn.wanjl.jquery.crud.ResultCode;
 
 /**
  * Servlet implementation class CRUDTest
@@ -27,7 +31,7 @@ public class CRUDTest extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -35,7 +39,7 @@ public class CRUDTest extends HttpServlet {
 		
 		response.setContentType("application/json");
 		// TODO Auto-generated method stub
-		response.getWriter().write(ResultCode.genResultCode(0, "success"));
+		response.getWriter().write(ResultCode.genResultCode(0, "success" + new Random().nextInt(10)));
 	}
 
 	/**
