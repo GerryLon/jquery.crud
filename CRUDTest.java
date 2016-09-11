@@ -1,4 +1,4 @@
-package cn.ipanel.jquery.crud;
+package cn.wanjl.jquery.crud;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
