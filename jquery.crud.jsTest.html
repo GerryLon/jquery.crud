@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>jquery.crud.js 测试</title>
+</head>
+
+<body>
+    <script src="jquery-2.2.4.js"></script>
+    <script src="jquery.crud.js"></script>
+    <script>
+    $.crud('http://localhost:8080/Mock/CRUDTest', {
+        success: function(data) {
+            alert(data.ret_msg);
+        },
+        error: function() {
+            alert('err')
+        },
+        complete: function() {
+            alert('complete');
+        },
+        requestFilter: function(url, options) {
+        	console.log(arguments);
+            var dfd = $.Deferred();
+
+           setTimeout(function() {
+
+                if (url && options) {
+                    dfd.resolve();
+                }
+
+            }, 3000);
+
+            return dfd.promise();
+        }
+    });
+    </script>
+</body>
+
+</html>

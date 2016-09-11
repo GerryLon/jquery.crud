@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>jquery.crud.js 测试</title>
+</head>
+
+<body>
+    <script src="jquery-2.2.4.js"></script>
+    <script src="jquery.crud.js"></script>
+    <script>
+    $.crud($.ajax('http://localhost:8080/Mock/CRUDTest'), 
+            $.ajax('http://localhost:8080/Mock/CRUDTest'), {
+    	allDone: function(d1, d2) {
+    		console.log(d1, d2);
+    	},
+    	oneFailed: function() {
+    		alert('failed');
+    	},
+    	progress: function() {
+    		console.log('loading...');
+    	},
+    	always: function() {
+    		alert('always');
+    	},
+    	errHandler: function(err) {
+    		alert('err: ' + err.ret + '-' + err.ret_msg);
+    	}
+    });
+    </script>
+</body>
+
+</html>
