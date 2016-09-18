@@ -5,8 +5,17 @@
  * @author wanjl
  * @date 2016/09/11
  */
+
 ;
-(function(window, $, undefined) {
+(function(factory) {
+
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery'], factory);
+    } else {
+        factory(jQuery);
+    }
+
+}(function($) {
 
     var defaultOptions = null,
         beforeLast;
@@ -17,7 +26,7 @@
             var deferreds = [],
                 done, allDone, fail, errHandler, progress, complete, always;
 
-            done = allDone = failed = progress = complete = always = $.noop;
+            done = allDone = failed = progress = complete = always = function() {};
 
             var type = $.type(url);
 
@@ -26,9 +35,8 @@
             // });
 
             // 四种传递参数的方式
-            // [url, options], [options], ($.ajax(), $.ajax()), [$.ajax(), $.ajax()]
-
-            // (options)
+            // $.curd(url, options), $.curd(options), $.curd($.ajax(), $.ajax(), options), $.curd([$.ajax(), $.ajax()], options)
+            // $.curd({})
             if (type === 'object' && !$.isFunction(url.promise)) {
                 options = undefined;
                 url = options.url;
@@ -48,7 +56,7 @@
                     /**
                      * 可能会有这样的需求, 在某些条件满足的情况下发送请求 其他情况禁止发送请求 比如当资源的id大于100时
                      * 返回false不发送, 返回true发送请求
-                     * 
+                     * 这个方法主要解决异步过滤的需求
                      * @return {[type]} [description]
                      */
                     requestFilter: function(url, options) {
@@ -75,32 +83,38 @@
                 var requestFilter = options.requestFilter,
                     promise = requestFilter.call($, url, options);
 
-                promise.done(function() {
+                // 不是异步操作, 直接返回true
+                if (promise === true) {
                     return $.ajax(options);
-                }).fail(function() {
-                    // 不满足执行请求的条件
-                });
+                } else if ($.isFunction(promise.promise)) {
+                    // promise对象
+                    promise.done(function() {
+                        return $.ajax(options);
+                    }).fail(function() {
+                        // 不满足执行请求的条件
+                    });
+                }
+
             } else {
-                // ($.ajax(), $.ajax()), [$.ajax(), $.ajax()]
+                // $.curd($.ajax(), $.ajax(), options), $.curd([$.ajax(), $.ajax()], options)
                 defaultOptions = {
                     progress: progress,
                     allDone: done,
                     oneFailed: failed,
                     always: always,
                     errHandler: function(response) {
-                        $.error(response);
+                        throw new Error('$.curd(), request failed!');
                     }
                 };
 
                 var args = [],
                     arg = arguments[0];
 
-                // $.crud($.ajax(), $.ajax(). options)
+                // $.crud($.ajax(), $.ajax(), options)
                 if ($.type(arguments[0]) === 'object') {
                     args = $.makeArray(arguments);
 
-                    beforeLast = args.slice(0,
-                        args.length - 1);
+                    beforeLast = args.slice(0, args.length - 1);
                     options = args.slice(-1)[0];
                 }
 
@@ -111,6 +125,7 @@
                 }
 
                 // 每个应该都是promise
+                // 这里其实没有必要判断, 因为jquery内部对不是promise的有处理
                 if (beforeLast.every(function(arg) {
                         return $.isFunction(arg.promise);
                     })) {
@@ -126,7 +141,7 @@
 
                         var responses = genDataArr(arguments);
 
-                        // 这里是业务上的, 本来不想关联业务, 后来想了想还是写上吧
+                        // 这里是业务上的
                         if (responses.every(function(response) {
                                 // arg = [response, textStatus, jqXHR]
                                 // we always ignore the two params, so do so
@@ -140,7 +155,7 @@
                             if ($.isFunction(allDone)) {
                                 allDone.apply(null, responses);
 
-                                // 函数数组
+                            // 函数数组
                             } else if ($.type(allDone) === 'array') {
 
                                 // 返回信息和处理函数一一对应, 如果不写给空
@@ -157,9 +172,9 @@
                             errHandler = options.errHandler;
 
                             if ($.isFunction(errHandler)) {
-                                errHandler.apply(null, errHandler);
+                                errHandler.apply(null, responses);
 
-                                // 函数数组
+                            // 函数数组
                             } else if ($.type(errHandler) === 'array') {
 
                                 // 返回信息和处理函数一一对应, 如果不写给空
@@ -205,5 +220,4 @@
         }
         return $.when.apply($, arrayOfPromises);
     }
-
-}(window, jQuery));
+}));
