@@ -5,7 +5,6 @@
  * @author wanjl
  * @date 2016/09/11
  */
-
 ;
 (function(factory) {
 
@@ -196,6 +195,12 @@
 
     // args = [[data, textStatus, jqXHR], [data, textStatus, jqXHR]]
     function genDataArr(args) {
+
+        // [data, textStatus, jqXHR]
+        if (args &&  args.length && !$.isArray(args[0])) {
+            return [args[0]];
+        }
+
         return Array.prototype.slice.call(args).map(function(arg) {
             return arg[0];
         });
