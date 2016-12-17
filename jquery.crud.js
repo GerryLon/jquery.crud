@@ -101,7 +101,7 @@
                     allDone: done,
                     oneFailed: failed,
                     always: always,
-                    errHandler: function(response) {
+                    notAllDone: function(response) {
                         throw new Error('$.curd(), request failed!');
                     }
                 };
@@ -144,7 +144,7 @@
                         if (responses.every(function(response) {
                                 // arg = [response, textStatus, jqXHR]
                                 // we always ignore the two params, so do so
-                                return response.ret === 0;
+                                return response.ret === 200;
                             })) {
 
                             // all succeed
@@ -152,7 +152,7 @@
 
                             // 所有成功, 只有一个处理函数
                             if ($.isFunction(allDone)) {
-                                allDone.apply(null, responses);
+                                allDone.call(null, responses);
 
                             // 函数数组
                             } else if ($.type(allDone) === 'array') {
@@ -168,17 +168,17 @@
                             // 至少有一个失败, 注意这里说的时返回的ret不为0就称为失败
                             // 如果要执行多个ajax, 但是有一个失败(ret不为0),
                             // 可以只指定一个错误处理函数,也可以一一指定
-                            errHandler = options.errHandler;
+                            notAllDone = options.errHandler;
 
-                            if ($.isFunction(errHandler)) {
-                                errHandler.apply(null, responses);
+                            if ($.isFunction(notAllDone)) {
+                                notAllDone.call(null, responses);
 
                             // 函数数组
-                            } else if ($.type(errHandler) === 'array') {
+                            } else if ($.type(notAllDone) === 'array') {
 
                                 // 返回信息和处理函数一一对应, 如果不写给空
                                 responses.map(function(response, i) {
-                                    return [response, errHandler[i] || function() {}];
+                                    return [response, notAllDone[i] || function() {}];
                                 }).forEach(function(pair) {
                                     pair[1].call(null, pair[0]);
                                 });
